@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <title>하루메모</title>
+  <meta name="description" content="메모와 일정을 한곳에서 — 오프라인으로 동작하는 아이폰용 메모·일정 앱">
+  <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151517" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="하루메모">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 메모 -->
+    <section class="view" id="view-memo" data-view="memo">
+      <header class="topbar">
+        <h1>메모</h1>
+        <span class="count" id="memo-count"></span>
+      </header>
+      <div class="search">
+        <input id="memo-search" type="search" placeholder="메모 검색" autocomplete="off">
+      </div>
+      <ul class="memo-list" id="memo-list"></ul>
+      <p class="empty" id="memo-empty" hidden>아직 메모가 없어요.<br>아래 <b>＋</b> 버튼으로 첫 메모를 써 보세요.</p>
+    </section>
+
+    <!-- 일정 -->
+    <section class="view" id="view-cal" data-view="cal" hidden>
+      <header class="topbar">
+        <button class="icon-btn" id="cal-prev" aria-label="이전 달">‹</button>
+        <h1 id="cal-title"></h1>
+        <button class="icon-btn" id="cal-next" aria-label="다음 달">›</button>
+        <button class="pill" id="cal-today">오늘</button>
+      </header>
+      <div class="weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="day-panel">
+        <h2 id="day-title"></h2>
+        <ul class="event-list" id="day-events"></ul>
+        <p class="empty small" id="day-empty" hidden>이 날은 일정이 없어요.</p>
+        <h2 class="upcoming-title">다가오는 일정</h2>
+        <ul class="event-list" id="upcoming-events"></ul>
+        <p class="empty small" id="upcoming-empty" hidden>예정된 일정이 없어요.</p>
+      </div>
+    </section>
+
+    <!-- 설정 -->
+    <section class="view" id="view-settings" data-view="settings" hidden>
+      <header class="topbar"><h1>설정</h1></header>
+      <div class="card">
+        <h3>백업</h3>
+        <p class="muted">모든 데이터는 이 아이폰 안에만 저장돼요. 기기를 바꾸거나 Safari 데이터를 지우기 전에 백업 파일을 저장해 두세요.</p>
+        <button class="btn" id="btn-export">백업 파일 내보내기</button>
+        <label class="btn secondary" for="import-file">백업 파일 불러오기</label>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+      </div>
+      <div class="card">
+        <h3>설치</h3>
+        <p class="muted" id="install-status"></p>
+      </div>
+      <div class="card">
+        <h3>정보</h3>
+        <p class="muted">하루메모 <span id="app-version"></span><br>메모 <span id="stat-memos">0</span>개 · 일정 <span id="stat-events">0</span>개</p>
+        <button class="btn danger" id="btn-wipe">모든 데이터 지우기</button>
+      </div>
+    </section>
+
+    <button class="fab" id="fab" aria-label="새로 만들기">＋</button>
+
+    <nav class="tabbar">
+      <button class="tab active" data-tab="memo"><span class="tab-ico">✎</span>메모</button>
+      <button class="tab" data-tab="cal"><span class="tab-ico">▦</span>일정</button>
+      <button class="tab" data-tab="settings"><span class="tab-ico">⚙︎</span>설정</button>
+    </nav>
+  </div>
+
+  <!-- 메모 편집 -->
+  <div class="sheet" id="memo-sheet" hidden>
+    <header class="sheet-bar">
+      <button class="text-btn" id="memo-done">완료</button>
+      <span class="sheet-meta" id="memo-meta"></span>
+      <button class="text-btn" id="memo-pin" aria-label="고정">📌</button>
+      <button class="text-btn danger-text" id="memo-delete">삭제</button>
+    </header>
+    <input class="memo-title" id="memo-title" placeholder="제목" autocomplete="off">
+    <textarea class="memo-body" id="memo-body" placeholder="내용을 입력하세요"></textarea>
+  </div>
+
+  <!-- 일정 편집 -->
+  <div class="sheet modal" id="event-sheet" hidden>
+    <div class="modal-card">
+      <header class="sheet-bar">
+        <button class="text-btn" id="event-cancel">취소</button>
+        <span class="sheet-meta" id="event-heading">새 일정</span>
+        <button class="text-btn strong" id="event-save">저장</button>
+      </header>
+      <form id="event-form" class="form">
+        <input id="ev-title" placeholder="일정 제목" required autocomplete="off">
+        <div class="row">
+          <label>날짜<input id="ev-date" type="date" required></label>
+        </div>
+        <div class="row">
+          <label class="switch"><input id="ev-allday" type="checkbox"> 하루 종일</label>
+        </div>
+        <div class="row" id="ev-time-row">
+          <label>시작<input id="ev-start" type="time"></label>
+          <label>종료<input id="ev-end" type="time"></label>
+        </div>
+        <div class="row colors" id="ev-colors"></div>
+        <textarea id="ev-note" placeholder="메모 (선택)"></textarea>
+        <button type="button" class="btn danger" id="event-delete" hidden>일정 삭제</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
